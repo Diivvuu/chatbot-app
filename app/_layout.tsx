@@ -7,55 +7,83 @@ import {
   ThemeProvider as NavThemeProvider,
 } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter } from 'expo-router';
+import {
+  Stack,
+  useRootNavigationState,
+  useRouter,
+  useSegments,
+} from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider, useThemeContext } from '@/hooks/theme-context';
-import { TouchableOpacity, Text, View } from 'react-native';
 import { UserProvider, useUser } from '@/hooks/UserContext';
-import { GestureHandlerRootView } from 'react-native-gesture-handler'; // 🛠 ADD THIS
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Header } from '../_components/Header';
+import ToastManager from 'toastify-react-native'; // ✅ new import!
+import { Text, View } from 'react-native';
 
 SplashScreen.preventAutoHideAsync();
 
+const toastConfig = {
+  success: (props: any) => (
+    <View style={{ backgroundColor: '#4CAF50', padding: 16, borderRadius: 10 }}>
+      <Text style={{ color: 'white', fontWeight: 'bold' }}>{props.text1}</Text>
+      {props.text2 && <Text style={{ color: 'white' }}>{props.text2}</Text>}
+    </View>
+  ),
+  // Override other toast types as needed
+};
+
 function InnerLayout() {
-  const { theme, mode, toggleTheme } = useThemeContext();
+  const { theme, mode } = useThemeContext();
   const { userId } = useUser();
-  const [loaded] = useFonts({
+  const [fontsLoaded] = useFonts({
     SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   });
 
-  useEffect(() => {
-    if (loaded) SplashScreen.hideAsync();
-  }, [loaded]);
+  const [loaded, setLoaded] = useState(false);
 
-  if (!loaded) return null; // Wait for fonts and splash
+  const router = useRouter();
+  const segments = useSegments();
+  const navigationState = useRootNavigationState();
+
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+      setLoaded(true);
+    }
+  }, [fontsLoaded]);
+
+  useEffect(() => {
+    if (!navigationState?.key) return;
+    if (userId) {
+      const currentScreen = '/' + segments.join('/');
+      console.log('Current Screen:', currentScreen);
+
+      if (!currentScreen.startsWith('/chat')) {
+        router.replace('/chat');
+      }
+    }
+  }, [userId, segments]);
+
+  if (!fontsLoaded) return null;
 
   return (
     <NavThemeProvider value={mode === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack initialRouteName={userId ? 'chat' : 'index'}>
-        <Stack.Screen name="chat" options={{ headerShown: false }} />
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-      </Stack>
-
-      {/* Floating Theme Toggle */}
-      <TouchableOpacity
-        onPress={toggleTheme}
-        style={{
-          position: 'absolute',
-          top: 40,
-          right: 20,
-          backgroundColor: mode === 'dark' ? '#333' : '#EEE',
-          padding: 12,
-          borderRadius: 24,
-          shadowColor: '#000',
-          shadowOpacity: 0.2,
-          shadowRadius: 4,
-        }}
+      <Stack
+        initialRouteName="index"
+        // screenOptions={{
+        //   header: () => <Header showMenuButton={false} showTitle={false} />,
+        // }}
       >
-        <Text style={{ color: mode === 'dark' ? '#FFF' : '#000' }}>
-          {mode === 'dark' ? '☀️' : '🌙'}
-        </Text>
-      </TouchableOpacity>
+        <Stack.Screen name="chat" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="index"
+          options={{
+            header: () => <Header showMenuButton={false} showTitle={false} />,
+          }}
+        />
+      </Stack>
 
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
     </NavThemeProvider>
@@ -65,6 +93,7 @@ function InnerLayout() {
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
+      <ToastManager config={toastConfig} />
       <UserProvider>
         <ThemeProvider>
           <InnerLayout />

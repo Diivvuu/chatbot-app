@@ -11,6 +11,7 @@ import {
   addDoc,
   orderBy,
   serverTimestamp,
+  deleteDoc,
 } from 'firebase/firestore';
 import UUID from 'react-native-uuid';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -34,26 +35,55 @@ export const db = initializeFirestore(app, {
 /* ───────── auth helpers ───────── */
 export const loginUser = async (email: string, phone: string) => {
   try {
-    const snap = await getDocs(
+    const usersRef = collection(db, 'users');
+
+    // 1. Check if combination (email + phone) exists
+    const exactMatchSnap = await getDocs(
       query(
-        collection(db, 'users'),
+        usersRef,
         where('email', '==', email),
         where('phoneNumber', '==', phone)
       )
     );
-    if (snap.empty)
-      return { status: 400, message: 'Invalid email or phone number' };
 
-    const id = snap.docs[0].id;
-    await AsyncStorage.setItem('userId', id);
+    if (!exactMatchSnap.empty) {
+      // ✅ Combination exists → Successful login
+      const id = exactMatchSnap.docs[0].id;
+      await AsyncStorage.setItem('userId', id);
+      return {
+        status: 200,
+        message: 'Login successful',
+        userData: exactMatchSnap.docs[0].data(),
+      };
+    }
+
+    // 2. Check if only email OR only phone exists
+    const emailMatchSnap = await getDocs(
+      query(usersRef, where('email', '==', email))
+    );
+    const phoneMatchSnap = await getDocs(
+      query(usersRef, where('phoneNumber', '==', phone))
+    );
+
+    if (!emailMatchSnap.empty || !phoneMatchSnap.empty) {
+      // ⚠️ Email or Phone already registered separately
+      return {
+        status: 400,
+        message: 'Account already registered with different phone/email',
+      };
+    }
+
+    // 3. If neither exists → Create new user
+    const uid = UUID.v4() as string;
+    await setDoc(doc(usersRef, uid), { email, phoneNumber: phone, uid });
+    await AsyncStorage.setItem('userId', uid);
+    return { status: 201, message: 'New account created and logged in' };
+  } catch (error) {
+    console.error('loginRegisterUser error', error);
     return {
-      status: 200,
-      message: 'Login successful',
-      userData: snap.docs[0].data(),
+      status: 500,
+      message: 'Something went wrong, please try again later',
     };
-  } catch (e) {
-    console.error('login', e);
-    return { status: 500, message: 'Internal error' };
   }
 };
 
@@ -90,25 +120,21 @@ export const createChat = async (userId: string, firstLine = '') =>
   ).id;
 
 export const addMessage = async (
-  userId: string,
+  uid: string,
   chatId: string,
   text: string,
-  sender: 'user' | 'bot'
+  sender: 'user' | 'bot',
+  createdAt = Date.now() // <-- default Date.now(), but now you can pass
 ) => {
-  const ref = await addDoc(
-    collection(db, 'users', userId, 'chats', chatId, 'messages'),
+  const docRef = await addDoc(
+    collection(db, 'users', uid, 'chats', chatId, 'messages'),
     {
       text,
       sender,
-      createdAt: serverTimestamp(),
+      createdAt,
     }
   );
-  await setDoc(
-    doc(db, 'users', userId, 'chats', chatId),
-    { updatedAt: serverTimestamp() },
-    { merge: true }
-  );
-  return ref.id;
+  return docRef.id;
 };
 
 export const getChats = async (userId: string) =>
@@ -130,3 +156,11 @@ export const getMessages = async (userId: string, chatId: string) =>
       )
     )
   ).docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+
+export const deleteChat = async (userId: string, chatId: string) => {
+  try {
+    await deleteDoc(doc(db, 'users', userId, 'chats', chatId));
+  } catch (error) {
+    console.error('Error deleting chat:', error);
+  }
+};

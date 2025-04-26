@@ -15,30 +15,66 @@ import { MotiView, AnimatePresence, MotiText } from 'moti';
 import { useThemeContext } from '@/hooks/theme-context';
 import { loginUser } from '@/functions/firebase';
 import { useUser } from '@/hooks/UserContext'; // Import the context to access setUserId
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Toast } from 'toastify-react-native';
 
 export default function UserInfoScreen() {
   const router = useRouter();
-  const { theme } = useThemeContext();
   const { userId, setUserId } = useUser(); // Access setUserId from the context
-  const darkMode =
-    theme.background === '#0C0C0E' || theme.background === '#121212';
+  const { theme, mode } = useThemeContext();
+
   useEffect(() => {
-    // if (userId) router.push('/chat');
+    if (userId) {
+      setTimeout(() => {
+        router.replace('/chat');
+      }, 50);
+    }
   }, [userId]);
+
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; phone?: string }>({});
 
+  const validateEmail = (email: string) => {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed) {
+      return 'Email address is required.';
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmed)) {
+      return 'Please enter a valid email address.';
+    }
+    return null;
+  };
+
+  const validatePhone = (phone: string) => {
+    const trimmed = phone.trim();
+    if (!trimmed) {
+      return 'Phone number is required.';
+    }
+    if (/\D/.test(trimmed)) {
+      return 'Phone number must contain only digits.';
+    }
+    if (trimmed.length !== 10) {
+      return 'Phone number must be exactly 10 digits.';
+    }
+    return null; // no error
+  };
+
   const handleSubmit = async () => {
-    const emailValid = /\S+@\S+\.\S+/.test(email);
-    const phoneValid = /^\d{10}$/.test(phone);
+    const trimmedEmail = email.trim().toLowerCase();
+    const trimmedPhone = phone.trim();
+
     const newErrors: typeof errors = {};
 
-    if (!emailValid) newErrors.email = 'Enter a valid email';
-    if (!phoneValid) newErrors.phone = 'Phone must be 10 digits';
+    const emailError = validateEmail(trimmedEmail);
+    const phoneError = validatePhone(trimmedPhone);
 
-    if (Object.keys(newErrors).length) {
+    if (emailError) newErrors.email = emailError;
+    if (phoneError) newErrors.phone = phoneError;
+
+    if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
@@ -47,33 +83,44 @@ export default function UserInfoScreen() {
     setLoading(true);
 
     try {
-      console.log('Checking if user exists in Firestore:', email, phone);
-      // Simulate a call to login or register here
-      // Replace with actual logic when integrating API calls
-      const response = await loginUser(email, phone);
+      const response = await loginUser(trimmedEmail, trimmedPhone);
+
       if (response.status === 200) {
-        setUserId(response?.userData?.uniqueId); // Set the user ID in context
-        console.log('User logged in successfully!');
-        router.push('/chat'); // Navigate to chat after successful login
+        setUserId(response?.userData?.uniqueId);
+        Toast.success('Welcome back! 🚀', 'bottom');
+        router.replace('/chat');
       } else if (response.status === 400) {
-        // Handle invalid combination
         setErrors({ email: response.message });
       } else if (response.status === 201) {
-        // If new user created
-        setUserId(response?.userData?.uniqueId); // Set the new user ID
-        router.push('/chat'); // Navigate to chat after successful registration
+        setUserId(response?.userData?.uniqueId);
+        Toast.show({
+          type: 'success',
+          text1: 'Account Created Successfully 🎉',
+          text2: 'Thanks for sharing your information!',
+          position: 'bottom',
+          visibilityTime: 4000,
+          autoHide: true,
+          backgroundColor: '#10B981',
+          textColor: '#ffffff',
+          icon: 'check-circle',
+          iconFamily: 'MaterialIcons',
+          progressBarColor: '#ffffff',
+          theme: 'dark',
+        });
+        router.replace('/chat');
       }
       setLoading(false);
     } catch (error: any) {
       console.error('Login failed:', error.message);
       setLoading(false);
+      Toast.error('Something went wrong. Please try again.', 'bottom');
     }
   };
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: theme.background }]}>
       <StatusBar
-        barStyle={darkMode ? 'light-content' : 'dark-content'}
+        barStyle={mode ? 'light-content' : 'dark-content'}
         backgroundColor={theme.background}
       />
       <KeyboardAvoidingView
@@ -152,26 +199,27 @@ export default function UserInfoScreen() {
               />
             </View>
 
-            <MotiView
-              from={{ scale: 1 }}
-              animate={{ scale: loading ? 0.97 : 1 }}
-              transition={{ type: 'timing', duration: 150 }}
+            <TouchableOpacity
               style={[
                 styles.button,
                 { backgroundColor: theme.button },
                 loading && styles.buttonDisabled,
               ]}
+              onPress={handleSubmit}
+              activeOpacity={0.8}
+              disabled={loading}
             >
-              <TouchableOpacity
-                onPress={handleSubmit}
-                activeOpacity={0.8}
-                disabled={loading}
+              <MotiView
+                from={{ scale: 1 }}
+                animate={{ scale: loading ? 0.97 : 1 }}
+                transition={{ type: 'timing', duration: 150 }}
+                style={{ alignItems: 'center' }}
               >
                 <Text style={[styles.buttonText, { color: theme.buttonText }]}>
                   {loading ? 'Please wait...' : 'Let’s Begin 🚀'}
                 </Text>
-              </TouchableOpacity>
-            </MotiView>
+              </MotiView>
+            </TouchableOpacity>
           </MotiView>
         </AnimatePresence>
       </KeyboardAvoidingView>

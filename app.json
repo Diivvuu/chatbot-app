@@ -37,6 +37,15 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "cohereApiKey": "lGrveVdCGgM9OhMpAOoUBXy5XWw2HYXlC0rGR6j0",
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "fe9ef2cf-c23d-4a39-9b49-abb67c09400b"
+      }
     }
   }
 }

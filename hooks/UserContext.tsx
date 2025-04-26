@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type UserContextType = {
   userId: string | null;
-  setUserId: (userId: string) => void;
+  setUserId: (userId: string | null) => void;
 };
 
 const UserContext = createContext<UserContextType>({

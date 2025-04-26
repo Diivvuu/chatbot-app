@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { addMessage, createChat, getMessages } from '@/functions/firebase';
+import Constants from 'expo-constants';
 
 type Message = {
   id: string;
@@ -9,12 +10,15 @@ type Message = {
   createdAt?: number;
 };
 
-// 🔥 YOUR COHERE API KEY here
-const COHERE_API_KEY = process.env.COHERE_API_KEY;
-console.log(COHERE_API_KEY, 'COHERE_API_KEY');
+/* ------------------------------------------------------------------ */
+/* Cohere setup                                                       */
+/* ------------------------------------------------------------------ */
+
+const COHERE_API_KEY = Constants.expoConfig?.extra?.cohereApiKey; // ← env via app.config
+
 async function fetchBotReply(userText: string): Promise<string> {
   try {
-    const response = await fetch('https://api.cohere.ai/v1/generate', {
+    const res = await fetch('https://api.cohere.ai/v1/generate', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${COHERE_API_KEY}`,
@@ -27,30 +31,34 @@ async function fetchBotReply(userText: string): Promise<string> {
         temperature: 0.5,
       }),
     });
-
-    const data = await response.json();
+    const data = await res.json();
     return (
       data.generations?.[0]?.text?.trim() || 'Sorry, I did not understand that.'
     );
-  } catch (error) {
-    console.error('Cohere error:', error);
+  } catch (err) {
+    console.error('Cohere error:', err);
     return 'Something went wrong!';
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Hook                                                               */
+/* ------------------------------------------------------------------ */
 
 export const useChat = (
   chatId: string | null,
   setChatId: (id: string) => void
 ) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [currentText, setCurrentText] = useState('');
   const [isBotTyping, setIsBotTyping] = useState(false);
 
+  /* -------- load messages when chatId changes ---------------------- */
   useEffect(() => {
     if (!chatId) {
       setMessages([]);
       return;
     }
+
     (async () => {
       const uid = await AsyncStorage.getItem('userId');
       if (!uid) return;
@@ -58,48 +66,67 @@ export const useChat = (
     })();
   }, [chatId]);
 
+  /* -------- little helper to keep the array unique ----------------- */
   const uniqueById = <T extends { id: string }>(arr: T[]) =>
     Array.from(new Map(arr.map((i) => [i.id, i])).values());
 
-  const sendMessage = useCallback(async () => {
-    if (!currentText.trim()) return;
-    const uid = await AsyncStorage.getItem('userId');
-    if (!uid) return;
+  /* -------- send message ------------------------------------------ */
+  const sendMessage = useCallback(
+    async (text: string) => {
+      const clean = text.trim();
+      if (!clean) return;
 
-    let cid = chatId;
-    const firstMsg = !cid;
-    if (firstMsg) {
-      cid = await createChat(uid, currentText);
-      setChatId(cid);
-    }
+      const uid = await AsyncStorage.getItem('userId');
+      if (!uid) return;
 
-    const userId = await addMessage(uid, cid!, currentText, 'user');
-    if (!firstMsg) {
+      let cid = chatId;
+      const firstMessage = !cid;
+
+      /* create new chat on the fly */
+      if (firstMessage) {
+        cid = await createChat(uid, clean);
+        setChatId(cid);
+      }
+
+      /* capture timestamp once */
+      const now = Date.now(); // 🛠 capture the time for user message immediately
+
+      /* optimistic user message */
+      const userMsgId = await addMessage(uid, cid!, clean, 'user', now); // 🛠 pass now
       setMessages((m) =>
         uniqueById([
           ...m,
           {
-            id: userId,
-            text: currentText,
+            id: userMsgId,
+            text: clean,
             sender: 'user',
-            createdAt: Date.now(),
+            createdAt: now, // 🛠 use captured time
           },
         ])
       );
-    }
-    setCurrentText('');
 
-    setIsBotTyping(true);
-    const botReply = await fetchBotReply(currentText);
-    const botId = await addMessage(uid, cid!, botReply, 'bot');
-    setMessages((m) =>
-      uniqueById([
-        ...m,
-        { id: botId, text: botReply, sender: 'bot', createdAt: Date.now() },
-      ])
-    );
-    setIsBotTyping(false);
-  }, [currentText, chatId, setChatId]);
+      /* fetch + save bot reply */
+      setIsBotTyping(true);
+      const botReply = await fetchBotReply(clean);
 
-  return { messages, currentText, setCurrentText, sendMessage, isBotTyping };
+      const botNow = Date.now(); // 🛠 capture separate timestamp for bot
+      const botMsgId = await addMessage(uid, cid!, botReply, 'bot', botNow); // 🛠 pass botNow
+      setMessages((m) =>
+        uniqueById([
+          ...m,
+          {
+            id: botMsgId,
+            text: botReply,
+            sender: 'bot',
+            createdAt: botNow, // 🛠
+          },
+        ])
+      );
+      setIsBotTyping(false);
+    },
+    [chatId, setChatId]
+  );
+
+  /* -------- public API -------------------------------------------- */
+  return { messages, sendMessage, isBotTyping };
 };

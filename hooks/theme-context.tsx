@@ -15,6 +15,7 @@ export type AppTheme = {
   button: string;
   buttonText: string;
   placeholder: string;
+  timestamp: string;
 };
 type ThemeMode = 'light' | 'dark';
 interface ThemeContextType {
@@ -26,30 +27,36 @@ interface ThemeContextType {
 /* ───────── palette ─────────
    Brand colour: indigo-600 (#6366F1) with teal accent.
    Greys: Tailwind’s neutral ramp → good contrast out-of-box             */
+// Add this inside AppTheme type:
+
+// Light theme
 const lightTheme: AppTheme = {
-  background: '#F9FAFB', // gray-50
-  card: '#FFFFFF', // white
-  text: '#111827', // gray-900
-  subtext: '#6B7280', // gray-500
-  inputBg: '#F3F4F6', // gray-100
-  inputBorder: '#E5E7EB', // gray-200
-  error: '#EF4444', // red-500
-  button: '#6366F1', // indigo-500
+  background: '#F8FAFC',
+  card: '#FFFFFF',
+  text: '#0F172A',
+  subtext: '#64748B',
+  inputBg: '#F1F5F9',
+  inputBorder: '#CBD5E1',
+  error: '#EF4444',
+  button: '#3B82F6',
   buttonText: '#FFFFFF',
-  placeholder: '#9CA3AF', // gray-400
+  placeholder: '#94A3B8',
+  timestamp: '#94A3B8', // NEW - Slate gray (good for time inside bubble)
 };
 
+// Dark theme
 const darkTheme: AppTheme = {
-  background: '#0F172A', // gray-900
-  card: '#1E293B', // gray-800
-  text: '#F8FAFC', // gray-50
-  subtext: '#94A3B8', // gray-400
-  inputBg: '#334155', // gray-700
-  inputBorder: '#475569', // gray-600
-  error: '#F87171', // red-400
-  button: '#22D3EE', // cyan-400 (teal accent pops on dark)
+  background: '#0F172A',
+  card: '#1E293B',
+  text: '#E2E8F0',
+  subtext: '#94A3B8',
+  inputBg: '#1E293B',
+  inputBorder: '#334155',
+  error: '#F87171',
+  button: '#60A5FA',
   buttonText: '#0F172A',
-  placeholder: '#64748B', // gray-500
+  placeholder: '#64748B',
+  timestamp: '#CBD5E1', // NEW - Slightly brighter gray (good for dark)
 };
 
 /* ───────── provider ───────── */

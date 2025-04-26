@@ -6,7 +6,8 @@
     "allowSyntheticDefaultImports": true,
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "types": ["vitest/globals", "jest"]
   },
   "include": [
     "**/*.ts",
@@ -14,6 +15,7 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "hooks/UserContext.tsx",
-    "functions/src/index.js"
-  ]
+    "functions/src/index.js",
+    "app/chat.tsx"
+, "jest.config.js"  ]
 }
