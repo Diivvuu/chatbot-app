@@ -125,14 +125,6 @@ Use Expo Go to scan and open the app!
 
 ---
 
-## 🖊️ Improvements
-
-- Add offline cache for chat history
-- Implement session expiration handling
-- Polish the input validation for edge cases
-- Auto-scroll to latest message when new bot reply arrives
-
----
 
 ## 💪 Credits
 
