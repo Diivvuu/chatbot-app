@@ -1,50 +1,159 @@
-# Welcome to your Expo app 👋
+# Nova Chatbot App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern chatbot mobile app built with **React Native**, **Firebase**, and **Cohere AI**.
 
-## Get started
+This project was developed as part of a technical task to build a chatbot system that collects user information and allows dynamic interaction with a bot, with clean UI/UX, proper code quality, and feature-rich design.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+## ✨ Features
 
-2. Start the app
+- User onboarding with **Email** and **Phone Number**
+- Input validation for email and phone fields
+- Chat interface built using **@flyerhq/react-native-chat-ui**
+- Bot replies powered by **Cohere AI** (trial API integration)
+- Fully responsive and polished UI for Android and iOS
+- Persistent **chat history** using Firebase Firestore
+- Persistent **user session** using AsyncStorage
+- **Create**, **View**, **Delete** chats with smooth UX
+- **Quick Inquiry Buttons** to start conversations faster
+- Theme switching (light/dark mode)
+- Modern animations with **Moti** library
 
-   ```bash
-    npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+## 🔹 Tech Stack
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+- **Frontend:** React Native, Expo
+- **Backend:** Firebase Firestore (DB), Firebase Functions
+- **Chat UI:** @flyerhq/react-native-chat-ui
+- **Bot AI:** Cohere Command-Light Model (API)
+- **Storage:** AsyncStorage for persistence
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+---
 
-## Get a fresh project
+## 📂 Project Structure
 
-When you're ready, run:
+```
+app/
+ |_ components/     # Reusable UI components (Header, ChatList, Typing Indicator)
+ |_ screens/        # ChatScreen (main chat experience)
+ |_ hooks/          # useChat, theme context
+ |_ functions/      # Firebase functions (for server side if needed)
+ |_ assets/         # Images, icons, assets
 
-```bash
-npm run reset-project
+functions/           # Cloud Functions (optional)
+package.json         # Dependencies
+firebase.json        # Firebase config
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## ⚙️ Setup Instructions
 
-To learn more about developing your project with Expo, look at the following resources:
+1. Clone the repository
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+git clone https://github.com/your-username/nova-chatbot.git
+cd nova-chatbot
+```
 
-## Join the community
+2. Install dependencies
 
-Join our community of developers creating universal apps.
+```bash
+npm install
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+3. Setup Firebase:
+
+- Create a Firebase project
+- Enable Firestore Database
+- Update the `firebaseConfig` inside `/functions/firebase.ts`
+
+4. Setup Cohere API Key:
+
+- Create a free Cohere account
+- Get your API key
+- Add it to your Expo config (`app.config.js`) under `extra`
+
+```js
+extra: {
+  cohereApiKey: "YOUR-COHERE-API-KEY",
+}
+```
+
+5. Run the app:
+
+```bash
+npm start
+```
+
+Use Expo Go to scan and open the app!
+
+---
+
+## 💪 Key Functionalities
+
+- **Login/Register:**
+
+  - If the user email and phone exists → Login
+  - If new → Create new Firebase document
+
+- **Chat Handling:**
+
+  - Create a new chat on first message
+  - Fetch chat messages from Firestore
+  - Delete chat via a delete icon beside each chat
+
+- **Bot Response:**
+
+  - Sent through Cohere AI model based on user query
+  - Optimistic updates for a smoother UX
+
+- **Local Persistence:**
+
+  - User session saved in AsyncStorage
+  - Chat history fetched automatically
+
+- **Animations:**
+
+  - Entry animations on message bubbles
+  - Typing indicator when bot is replying
+
+- **Theme Switching:**
+  - Toggle between Light and Dark mode from the header dropdown
+
+---
+
+## 🖊️ Improvements
+
+- Add offline cache for chat history
+- Implement session expiration handling
+- Polish the input validation for edge cases
+- Auto-scroll to latest message when new bot reply arrives
+
+---
+
+## 💪 Credits
+
+- [React Native](https://reactnative.dev/)
+- [Firebase](https://firebase.google.com/)
+- [Cohere AI](https://cohere.ai/)
+- [Flyer Chat UI](https://github.com/flyerhq/react-native-chat-ui)
+- [Moti Animations](https://moti.fyi/)
+
+---
+
+## 📊 Status
+
+> ✅ Fully functional, cleanly coded, production-ready demo app.
+
+---
+
+## 🔗 License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+### If you find this useful, don't forget to ✨ star the repo and support the project!

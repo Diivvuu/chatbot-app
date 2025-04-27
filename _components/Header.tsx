@@ -172,13 +172,16 @@ export function Header({
 }
 
 const styles = StyleSheet.create({
-  header: {
+  header: { 
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderColor: '#00000022',
     zIndex: 10,
+    backgroundColor: 'red',
+    width: '100%',
+    height: '100%',
   },
   menuButton: {
     height: 28,

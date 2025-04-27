@@ -21,7 +21,7 @@ interface Props {
   onSelect: (id: string) => void;
   selectedId: string | null;
   onRefreshChats: () => void;
-  onDeleteChat?: (id: string) => void;
+  onDeleteChat: (id: string) => void;
 }
 
 export const ChatHistoryList: React.FC<Props> = React.memo(
@@ -43,25 +43,24 @@ export const ChatHistoryList: React.FC<Props> = React.memo(
         const isSelected = item.id === selectedId;
 
         return (
-          <TouchableOpacity
-            onPress={() => onSelect(item.id)}
-            onLongPress={() => setModalId(item.id)}
-            accessibilityRole="button"
-            activeOpacity={0.8}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 12, // ✅ same spacing as chatItem
+              backgroundColor: isSelected ? `${theme.button}22` : 'transparent',
+              borderWidth: 1.5,
+              borderColor: isSelected ? theme.button : `${theme.text}22`,
+              borderRadius: 8,
+              paddingVertical: 10,
+              paddingHorizontal: 8,
+            }}
           >
-            <MotiView
-              from={{ scale: 1 }}
-              animate={{ scale: isSelected ? 1.02 : 1 }}
-              transition={{ type: 'timing', duration: 220 }}
-              style={[
-                styles.chatItem,
-                {
-                  backgroundColor: isSelected
-                    ? `${theme.button}22`
-                    : 'transparent',
-                  borderColor: isSelected ? theme.button : `${theme.text}22`,
-                },
-              ]}
+            <TouchableOpacity
+              onPress={() => onSelect(item.id)}
+              accessibilityRole="button"
+              activeOpacity={0.8}
+              style={{ flex: 1 }}
             >
               <Text
                 numberOfLines={1}
@@ -72,8 +71,16 @@ export const ChatHistoryList: React.FC<Props> = React.memo(
               >
                 {item.heading || 'Untitled chat'}
               </Text>
-            </MotiView>
-          </TouchableOpacity>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => setModalId(item.id)}
+              style={{ padding: 8 }}
+              hitSlop={10}
+            >
+              <Text style={{ fontSize: 16, color: '#EF4444' }}>🗑️</Text>
+            </TouchableOpacity>
+          </View>
         );
       },
       [selectedId, onSelect, theme]

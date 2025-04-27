@@ -129,7 +129,7 @@ const TextBubble = ({
   );
 };
 
-const ChatDrawerContent = ({
+export const ChatDrawerContent = ({
   chatList,
   chatId,
   setChatId,
@@ -237,7 +237,7 @@ export default function ChatScreen() {
     () =>
       messages
         .filter((m) => m && m.text)
-        .sort((a, b) => safeMs(a.createdAt) - safeMs(b.createdAt))
+        .sort((a, b) => safeMs(b.createdAt) - safeMs(a.createdAt))
         .map<MessageType.Text>((m) => ({
           id: m.id,
           author: { id: m.sender === 'user' ? 'user' : 'bot' },
@@ -306,7 +306,7 @@ export default function ChatScreen() {
         paddingHorizontal: 20,
         paddingBottom: 40,
         backgroundColor: theme.background,
-        transform: [{ scaleX: -1 }],
+        transform: Platform.OS === 'android' ? [{ scaleX: -1 }] : undefined,
       }}
     >
       <MotiView
@@ -429,7 +429,12 @@ export default function ChatScreen() {
           />
         )}
       >
-        <View style={{ flex: 1 }}>
+        <View
+          style={{
+            flex: 1,
+            marginTop: Platform.OS === 'android' ? 0 : -insets.top - 10,
+          }}
+        >
           <Header showDropdownMenu showMenuButton onMenuPress={openDrawer} />
 
           <View style={styles.chatArea}>
